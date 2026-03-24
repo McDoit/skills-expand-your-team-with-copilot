@@ -33,5 +33,23 @@
 
 ---
 
+## 📊 Presentation: Agent Work in GitHub Copilot
+
+A ready-to-use 4-slide, ~5-minute PowerPoint presentation about the GitHub Copilot Coding Agent is included in this repository: **`agent-work-in-github-copilot.pptx`**.
+
+You can also regenerate it yourself using the included Python script:
+
+```bash
+# 1. Install the dependency (one-time)
+pip install python-pptx
+
+# 2. Run the script
+python create_presentation.py
+```
+
+The script (`create_presentation.py`) will save `agent-work-in-github-copilot.pptx` in the current directory.
+
+---
+
 &copy; 2025 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
 
