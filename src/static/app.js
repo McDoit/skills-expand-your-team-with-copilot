@@ -865,4 +865,33 @@ document.addEventListener("DOMContentLoaded", () => {
   checkAuthentication();
   initializeFilters();
   fetchActivities();
+  initDarkMode();
 });
+
+// Dark mode toggle
+function initDarkMode() {
+  const toggle = document.getElementById("dark-mode-toggle");
+  const icon = document.getElementById("dark-mode-icon");
+
+  // The inline script in index.html already applied the saved theme to avoid
+  // flash of unstyled content. Just sync the icon and label with current state.
+  function syncToggleUI() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    icon.textContent = isDark ? "☀️" : "🌙";
+    toggle.setAttribute("aria-label", isDark ? "Switch to light mode" : "Switch to dark mode");
+  }
+
+  syncToggleUI();
+
+  toggle.addEventListener("click", () => {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    if (isDark) {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    }
+    syncToggleUI();
+  });
+}
