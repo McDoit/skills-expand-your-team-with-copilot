@@ -470,12 +470,16 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.entries(filteredActivities).forEach(([name, details]) => {
       renderActivityCard(name, details);
     });
+
+    // Scroll to any deep-linked activity after rendering
+    scrollToActivityFromHash();
   }
 
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
     activityCard.className = "activity-card";
+    activityCard.id = `activity-${encodeURIComponent(name)}`;
 
     // Calculate spots and capacity
     const totalSpots = details.max_participants;
@@ -569,6 +573,19 @@ document.addEventListener("DOMContentLoaded", () => {
         `
         }
       </div>
+      <div class="social-share">
+        <span class="share-label">Share:</span>
+        <a class="share-btn share-btn-twitter"
+           href="${buildTwitterShareUrl(name, details.description, formattedSchedule)}"
+           target="_blank" rel="noopener noreferrer" aria-label="Share on X (Twitter)">𝕏</a>
+        <a class="share-btn share-btn-facebook"
+           href="${buildFacebookShareUrl(name)}"
+           target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook">f</a>
+        <a class="share-btn share-btn-whatsapp"
+           href="${buildWhatsAppShareUrl(name, details.description, formattedSchedule)}"
+           target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp">💬</a>
+        <button class="share-btn share-btn-copy" data-activity="${name}" aria-label="Copy link">🔗</button>
+      </div>
     `;
 
     // Add click handlers for delete buttons
@@ -587,7 +604,82 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Add click handler for copy link button
+    const copyButton = activityCard.querySelector(".share-btn-copy");
+    copyButton.addEventListener("click", () => copyActivityLink(name));
+
     activitiesList.appendChild(activityCard);
+  }
+
+  // Build an activity-specific URL using a hash fragment
+  function getActivityUrl(activityName) {
+    return `${window.location.origin}${window.location.pathname}#${encodeURIComponent(activityName)}`;
+  }
+
+  // Build Twitter/X share URL
+  function buildTwitterShareUrl(name, description, schedule) {
+    const text = `Check out "${name}" at Mergington High School! ${description} — ${schedule}`;
+    const url = getActivityUrl(name);
+    return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  }
+
+  // Build Facebook share URL
+  function buildFacebookShareUrl(name) {
+    const url = getActivityUrl(name);
+    return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+  }
+
+  // Build WhatsApp share URL
+  function buildWhatsAppShareUrl(name, description, schedule) {
+    const url = getActivityUrl(name);
+    const text = `Check out "${name}" at Mergington High School!\n${description}\nSchedule: ${schedule}\n${url}`;
+    return `https://wa.me/?text=${encodeURIComponent(text)}`;
+  }
+
+  // Copy activity link to clipboard
+  function copyActivityLink(activityName) {
+    const url = getActivityUrl(activityName);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        showMessage(`Link for "${activityName}" copied to clipboard!`, "success");
+      }).catch(() => {
+        fallbackCopyToClipboard(url, activityName);
+      });
+    } else {
+      fallbackCopyToClipboard(url, activityName);
+    }
+  }
+
+  // Fallback clipboard copy for non-HTTPS or older browsers
+  function fallbackCopyToClipboard(url, activityName) {
+    const textArea = document.createElement("textarea");
+    textArea.value = url;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand("copy");
+      showMessage(`Link for "${activityName}" copied to clipboard!`, "success");
+    } catch (err) {
+      showMessage("Could not copy link. Please copy the page URL manually.", "error");
+    }
+    document.body.removeChild(textArea);
+  }
+
+  // Scroll to and highlight the activity referenced in the URL hash
+  function scrollToActivityFromHash() {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    // Normalize: decode then re-encode to match the element ID format
+    const normalizedHash = encodeURIComponent(decodeURIComponent(hash));
+    const card = document.getElementById(`activity-${normalizedHash}`);
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.classList.add("activity-card-highlighted");
+      setTimeout(() => card.classList.remove("activity-card-highlighted"), 2000);
+    }
   }
 
   // Event listeners for search and filter
@@ -865,4 +957,7 @@ document.addEventListener("DOMContentLoaded", () => {
   checkAuthentication();
   initializeFilters();
   fetchActivities();
+
+  // Handle deep link to a specific activity via URL hash
+  window.addEventListener("hashchange", scrollToActivityFromHash);
 });
